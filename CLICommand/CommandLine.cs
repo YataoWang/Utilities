@@ -6,7 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace AppService {
+namespace CLI {
 
   public class CLICommand {
     private static readonly string TAB1 = "  ";
