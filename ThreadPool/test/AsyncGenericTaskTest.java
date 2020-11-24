@@ -10,11 +10,11 @@ public class AsyncGenericTaskTest {
     try {
       task.setSink(new MyTaskEvent());
       task.initialize();
-      for (int i = 0; i < 200000; i++) {
+      for (int i = 0; i < 2000000; i++) {
         task.addTask((i + 1) + "");
       }
 
-      Thread.sleep(10 * 1000);
+      Thread.sleep(15 * 1000);
     }catch (Exception ex) {
       ex.printStackTrace();
     } finally {

@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AsyncGenericTask<T> implements IWorkerEvent {
+  private final Object syncObj = new Object();
   private static final int DEFAULT_MAX_TASKS = 10000;
   private boolean _running = true;
   private ITaskEvent _sink;
@@ -44,6 +45,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
     if (null != this._sink) {
       this._sink.fireInitialize();
     }
+
     this._running = true;
     this._worker = WorkerPool.getInstance().acquireWorker(this);
   }
@@ -57,23 +59,25 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
   }
 
   public void addTask(T task) {
-    if (this._mainTasks.size() < this._maxTaskNum) {
-      this._mainTasks.add(task);
-    } else {
-      switch (this._policy) {
-        case ABORT: {
-          throw new RuntimeException(this._policy + "\r\nPlease increase the maximum task value.");
+    synchronized (this.syncObj) {
+      if (this._mainTasks.size() < this._maxTaskNum) {
+        this._mainTasks.add(task);
+      } else {
+        switch (this._policy) {
+          case ABORT: {
+            throw new RuntimeException(this._policy + "\r\nPlease increase the maximum task value.");
+          }
+          case DISCARD: {
+            // DO nothing
+            break;
+          }
+          case BLOCK: {
+            this._pendingTasks.add(task);
+            break;
+          }
+          default:
+            throw new RuntimeException("Invalid worker policy.");
         }
-        case DISCARD: {
-          // DO nothing
-          break;
-        }
-        case BLOCK: {
-          this._pendingTasks.add(task);
-          break;
-        }
-        default:
-          throw new RuntimeException("Invalid worker policy.");
       }
     }
   }
@@ -86,8 +90,14 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
     }
 
     while (this._running) {
-      if (this._mainTasks.size() > 0) {
-        T task = this._mainTasks.poll();
+      T task = null;
+      synchronized (this.syncObj) {
+        if (!this._mainTasks.isEmpty()) {
+          task = this._mainTasks.remove();
+        }
+      }
+
+      if (null != task) {
         if (null != this._sink) {
           try {
             this._sink.fireTask(task);
@@ -102,8 +112,10 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
         }
       }
 
-      while (this._pendingTasks.size() > 0 && this._mainTasks.size() < this._maxTaskNum) {
-        this._mainTasks.add(this._pendingTasks.poll());
+      synchronized (this.syncObj) {
+        while (!this._pendingTasks.isEmpty() && this._mainTasks.size() < this._maxTaskNum) {
+          this._mainTasks.add(this._pendingTasks.remove());
+        }
       }
     }
   }
