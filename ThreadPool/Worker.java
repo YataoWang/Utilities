@@ -48,7 +48,7 @@ public class Worker implements IWorker, Runnable {
   }
 
   @Override
-  public boolean isIdle() {
+  public boolean idle() {
     return (this.state == WorkerState.READYING || this.state == WorkerState.STOPPED);
   }
 

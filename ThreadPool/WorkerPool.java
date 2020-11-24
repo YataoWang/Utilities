@@ -26,7 +26,7 @@ public class WorkerPool {
     Worker worker = null;
     for (int i = 0; i < this._workers.size(); i++) {
       worker = this._workers.get(i);
-      if (worker.isIdle()) {
+      if (worker.idle()) {
         worker.setSink(event);
         break;
       }
