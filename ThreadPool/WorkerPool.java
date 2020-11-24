@@ -18,7 +18,11 @@ public class WorkerPool {
     initWorker();
   }
 
-  public synchronized Worker acquireWorker(IWorkerEvent event) throws Exception {
+  public synchronized IWorker acquireWorker(IWorkerEvent event) throws Exception {
+    return acquireWorker(event, WorkerPolicy.BLOCK);
+  }
+
+  public synchronized IWorker acquireWorker(IWorkerEvent event, WorkerPolicy policy) throws Exception {
     Worker worker = null;
     for (int i = 0; i < this._workers.size(); i++) {
       worker = this._workers.get(i);
@@ -28,23 +32,35 @@ public class WorkerPool {
       }
     }
 
+    if (null == worker) {
+      int currentSize = this._workers.size();
+      if (currentSize < this._maxThreadSize) {
+        worker = createWorker();
+        worker.setSink(event);
+        this._workers.add(worker);
+      } else {
+        throw new Exception("There isn't idle worker.");
+      }
+    }
 
-    // TODO
     return worker;
   }
-
 
   public synchronized void releaseWorker(Worker worker) throws Exception {
     if (null == worker) {
       return;
     }
 
-    worker.close();
+    worker.stop();
   }
 
   private void initWorker() {
     for (int i = 0; i < this._minThreadSize; i++) {
-      this._workers.add(new Worker("Thread-" + this._incrementNum.getNextNumber()));
+      this._workers.add(createWorker());
     }
+  }
+
+  private Worker createWorker() {
+    return new Worker("Thread-" + this._incrementNum.getNextNumber(), this._workerPolicy, null);
   }
 }

@@ -1,17 +1,20 @@
 package com.src;
 
-public class Worker extends Thread {
+public class Worker implements IWorker, Runnable {
   private IWorkerEvent sink;
   private WorkerState state;
-
-  public Worker(String name) {
-    this(name, null);
-  }
+  private WorkerPolicy policy;
+  private Thread workThread;
 
   public Worker(String name, IWorkerEvent sink) {
-    super(name);
+    this(name, WorkerPolicy.BLOCK, sink);
+  }
+
+  public Worker(String name, WorkerPolicy policy, IWorkerEvent sink) {
     this.sink = sink;
     this.state = WorkerState.READYING;
+    this.policy = policy;
+    this.workThread = new Thread(this, name);
   }
 
   public void setSink(IWorkerEvent sink) {
@@ -26,7 +29,27 @@ public class Worker extends Thread {
     }
 
     this.state = WorkerState.STARTING;
-    super.start();
+    this.workThread.start();
+  }
+
+  @Override
+  public void stop() {
+    if (this.state != WorkerState.RUNNING) {
+      return;
+    }
+
+    try {
+      this.state = WorkerState.STOPPING;
+      this.workThread.interrupt();
+    } finally {
+      // TODO, check with the run method final block
+      this.state = WorkerState.STOPPED;
+    }
+  }
+
+  @Override
+  public boolean isIdle() {
+    return (this.state == WorkerState.READYING || this.state == WorkerState.STOPPED);
   }
 
   @Override
@@ -41,23 +64,5 @@ public class Worker extends Thread {
     } finally {
       this.state = WorkerState.STOPPED;
     }
-  }
-
-  public void close() throws Exception {
-    if (this.state != WorkerState.RUNNING) {
-      return;
-    }
-
-    try {
-      this.state = WorkerState.STOPPING;
-      super.interrupt();
-    } finally {
-      // TODO, check with the run method final block
-      this.state = WorkerState.STOPPED;
-    }
-  }
-
-  public boolean isIdle() {
-    return (this.state == WorkerState.READYING || this.state == WorkerState.STOPPED);
   }
 }
