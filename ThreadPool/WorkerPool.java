@@ -3,26 +3,25 @@ package com.src;
 import java.util.Vector;
 
 public class WorkerPool {
+  private static WorkerPool instance = new WorkerPool();
   private final IncrementNum _incrementNum;
   private final int _minThreadSize;
   private final int _maxThreadSize;
-  private final WorkerPolicy _workerPolicy;
   private Vector<Worker> _workers;
 
-  public WorkerPool(int maxThreadSize, WorkerPolicy workerPolicy) {
+  private WorkerPool() {
     this._incrementNum = new IncrementNum();
     this._minThreadSize = Runtime.getRuntime().availableProcessors() * 2;
-    this._maxThreadSize = maxThreadSize;
-    this._workerPolicy = workerPolicy;
+    this._maxThreadSize = this._minThreadSize * 100;
     this._workers = new Vector<Worker>();
     initWorker();
   }
 
-  public synchronized IWorker acquireWorker(IWorkerEvent event) throws Exception {
-    return acquireWorker(event, WorkerPolicy.BLOCK);
+  public static synchronized WorkerPool getInstance() {
+    return instance;
   }
 
-  public synchronized IWorker acquireWorker(IWorkerEvent event, WorkerPolicy policy) throws Exception {
+  public synchronized IWorker acquireWorker(IWorkerEvent event) {
     Worker worker = null;
     for (int i = 0; i < this._workers.size(); i++) {
       worker = this._workers.get(i);
@@ -39,14 +38,15 @@ public class WorkerPool {
         worker.setSink(event);
         this._workers.add(worker);
       } else {
-        throw new Exception("There isn't idle worker.");
+        throw new RuntimeException("There isn't idle worker.");
       }
     }
 
+    worker.start();
     return worker;
   }
 
-  public synchronized void releaseWorker(Worker worker) throws Exception {
+  public synchronized void releaseWorker(IWorker worker) {
     if (null == worker) {
       return;
     }
@@ -61,6 +61,6 @@ public class WorkerPool {
   }
 
   private Worker createWorker() {
-    return new Worker("Thread-" + this._incrementNum.getNextNumber(), this._workerPolicy, null);
+    return new Worker("WorkerPool Thread-" + this._incrementNum.getNextNumber());
   }
 }

@@ -3,17 +3,15 @@ package com.src;
 public class Worker implements IWorker, Runnable {
   private IWorkerEvent sink;
   private WorkerState state;
-  private WorkerPolicy policy;
   private Thread workThread;
 
-  public Worker(String name, IWorkerEvent sink) {
-    this(name, WorkerPolicy.BLOCK, sink);
+  public Worker(String name) {
+    this(name, null);
   }
 
-  public Worker(String name, WorkerPolicy policy, IWorkerEvent sink) {
+  public Worker(String name, IWorkerEvent sink) {
     this.sink = sink;
     this.state = WorkerState.READYING;
-    this.policy = policy;
     this.workThread = new Thread(this, name);
   }
 
@@ -34,13 +32,12 @@ public class Worker implements IWorker, Runnable {
 
   @Override
   public void stop() {
-    if (this.state != WorkerState.RUNNING) {
-      return;
-    }
-
+    this.state = WorkerState.STOPPING;
     try {
-      this.state = WorkerState.STOPPING;
       this.workThread.interrupt();
+      this.workThread.join();
+    } catch (Exception ex) {
+      ex.printStackTrace();
     } finally {
       // TODO, check with the run method final block
       this.state = WorkerState.STOPPED;
@@ -48,21 +45,19 @@ public class Worker implements IWorker, Runnable {
   }
 
   @Override
+  public WorkerState getState() {
+    return this.state;
+  }
+
   public boolean idle() {
     return (this.state == WorkerState.READYING || this.state == WorkerState.STOPPED);
   }
 
   @Override
   public void run() {
-    if (null == this.sink) {
-      return;
-    }
-
-    try {
-      this.state = WorkerState.RUNNING;
+    this.state = WorkerState.RUNNING;
+    if (null != this.sink) {
       this.sink.runWorker();
-    } finally {
-      this.state = WorkerState.STOPPED;
     }
   }
 }
