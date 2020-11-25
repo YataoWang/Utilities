@@ -6,11 +6,15 @@ import com.src.WorkerPolicy;
 
 public class AsyncGenericTaskTest {
   public static void main(String[] args){
-    AsyncGenericTask<String> task = new AsyncGenericTask<String>(WorkerPolicy.BLOCK);
+    AsyncGenericTask<String> task = new AsyncGenericTask<String>();
     try {
-      task.setSink(new MyTaskEvent());
-      task.initialize();
-      for (int i = 0; i < 2000000; i++) {
+      AsyncGenericTask.TaskConfiguration conf = new AsyncGenericTask.TaskConfiguration();
+      conf.loggerName = "test";
+      conf.logLevel = AsyncGenericTask.TaskLoggerLevel.ALL;
+      conf.policy = WorkerPolicy.BLOCK;
+      conf.sink = new MyTaskEvent();
+      task.initialize(conf);
+      for (int i = 0; i < 100000; i++) {
         task.addTask((i + 1) + "");
       }
 

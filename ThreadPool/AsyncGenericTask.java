@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 public class AsyncGenericTask<T> implements IWorkerEvent {
   private final Object syncObj = new Object();
   private static final int DEFAULT_MAX_TASKS = 10000;
-  private boolean _running = true;
+  private boolean _running;
   private ITaskEvent _sink;
   private int _maxTaskNum;
   private WorkerPolicy _policy;
@@ -17,6 +17,10 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
   private Queue<T> _pendingTasks;
   private Logger _logger;
   private Level _level;
+
+  public AsyncGenericTask() {
+    this(null);
+  }
 
   public AsyncGenericTask(ITaskEvent sink) {
     this._sink = sink;
@@ -28,7 +32,16 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
     this._sink = sink;
   }
 
+  /**
+   * Initialize the {@link AsyncGenericTask} with {@link TaskConfiguration}, starting the task running thread. It does nothing if it's already initialized.
+   * The task can be added by {@link #addTask(Object)} after {@link AsyncGenericTask} is initialized
+   * @param conf The configuration value to initialize the {@link TaskConfiguration}. Must not ne null.
+   * @throws Exception
+   */
   public void initialize(TaskConfiguration conf) throws Exception {
+    if (this._running) {
+      return;
+    }
     if (null == conf) {
       throw new Exception("Invalid configuration.");
     }
@@ -49,6 +62,9 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
     this._worker = WorkerPool.getInstance().acquireWorker(this);
   }
 
+  /**
+   * Shutdown the {@link TaskConfiguration}, close the task thread
+   */
   public void shutdown() {
     this._running = false;
     WorkerPool.getInstance().releaseWorker(this._worker);
@@ -57,6 +73,21 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
     }
   }
 
+  /**
+   * Add task to main queue. If the main queue is full, doing the following policy
+   * <ul>
+   *   <li>{@link WorkerPolicy#ABORT}<br>
+   *     Throw an exception
+   *   </li>
+   *   <li>{@link WorkerPolicy#DISCARD}<br>
+   *     Discard the task
+   *   </li>
+   *   <li>{@link WorkerPolicy#BLOCK}<br>
+   *     Add the task to pending queue, then move the task from pending queue to main queue if main queue executes a task
+   *   </li>
+   * </ul>
+   * @param task
+   */
   public void addTask(T task) {
     synchronized (this.syncObj) {
       if (this._mainTasks.size() < this._maxTaskNum) {
@@ -64,10 +95,11 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
       } else {
         switch (this._policy) {
           case ABORT: {
-            throw new RuntimeException(this._policy + "\r\nPlease increase the maximum task value.");
+            log(Level.SEVERE, this._policy + "\r\nPlease increase the maximum task value.");
+            throw new RuntimeException();
           }
           case DISCARD: {
-            System.out.println(this._policy + "\r\nDiscard task " + task + ".");
+            log(Level.WARNING, this._policy + "\r\nPlease increase the maximum task value.");
             break;
           }
           case BLOCK: {
@@ -75,6 +107,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
             break;
           }
           default:
+            log(Level.SEVERE, "Invalid worker policy.");
             throw new RuntimeException("Invalid worker policy.");
         }
       }
@@ -162,19 +195,19 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
     }
   }
 
-  public class TaskConfiguration {
+  public static class TaskConfiguration {
     /**
      * @serial The worker's policy when the main task is full
      *
      * <ul>
      *
-     * <li> {@link WorkerPolicy.BLOCK} It's default value
+     * <li> {@link WorkerPolicy#BLOCK} It's default value
      * If the main task query is full, the added task will be added to pending query. Running a task from main queue, add a task from pending queue
      *
-     * <li> {@link WorkerPolicy.DISCARD}
+     * <li> {@link WorkerPolicy#DISCARD}
      * If the main task query is full, discard the added task
      *
-     * <li> {@link WorkerPolicy.ABORT}
+     * <li> {@link WorkerPolicy#ABORT}
      * If the main task query is full, the current thread will throw an exception
      *
      * </ul>
@@ -183,67 +216,71 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
 
     /**
      * @serial The maximum task count of the main queue.
-     * If it does not specify this value, it uses {@link DEFAULT_MAX_TASKS}
+     * If it does not specify this value, it uses {@link AsyncGenericTask#DEFAULT_MAX_TASKS}
      */
     public int maxTaskNum = 0;
 
     /**
-     * The logger name, it's used the {@link java.util.logging.Logger}
+     * @serial The logger name, it's used the {@link java.util.logging.Logger}
      */
     public String loggerName; // java.util.logging.Logger
 
     /**
-     * The logger level
-     * The default value is {@link INFO} in {@link TaskLoggerLevel}
+     * @serial The logger level
+     * The default value is {@link TaskLoggerLevel#INFO}
      */
     public TaskLoggerLevel logLevel = TaskLoggerLevel.INFO;
+
+    /**
+     * @serial The task's event
+     */
     public ITaskEvent sink;
   }
 
   public enum TaskLoggerLevel {
     ALL {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return 0;
       }
     },
     ERROR {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return 1;
       }
     },
     WARNING {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return 2;
       }
     },
     INFO {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return 3;
       }
     },
     VERBOSE {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return 4;
       }
     },
     DEBUG {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return 5;
       }
     },
     OFF {
       @Override
-      protected int valueOf() {
+      public int valueOf() {
         return Integer.MAX_VALUE;
       }
     };
 
-    protected abstract int valueOf();
+    public abstract int valueOf();
   }
 }

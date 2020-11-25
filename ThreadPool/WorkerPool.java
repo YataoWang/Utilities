@@ -2,6 +2,10 @@ package com.src;
 
 import java.util.Vector;
 
+/**
+ * A Singleton class
+ * Using {@link WorkerPool#getInstance()} to get instance
+ */
 public class WorkerPool {
   private static WorkerPool instance = new WorkerPool();
   private final IncrementNum _incrementNum;
@@ -21,6 +25,11 @@ public class WorkerPool {
     return instance;
   }
 
+  /**
+   * Acquire a {@link IWorker} instance and start it
+   * @param event The event {@link IWorkerEvent} to be called by the worker thread
+   * @return
+   */
   public synchronized IWorker acquireWorker(IWorkerEvent event) {
     Worker worker = null;
     for (int i = 0; i < this._workers.size(); i++) {
@@ -46,6 +55,10 @@ public class WorkerPool {
     return worker;
   }
 
+  /**
+   * Give back the {@link IWorker} instance and stop it
+   * @param worker
+   */
   public synchronized void releaseWorker(IWorker worker) {
     if (null == worker) {
       return;
