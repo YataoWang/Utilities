@@ -63,7 +63,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
   }
 
   /**
-   * Shutdown the {@link TaskConfiguration}, close the task thread
+   * Shutdown the {@link AsyncGenericTask}, close the task thread
    */
   public void shutdown() {
     this._running = false;
