@@ -13,5 +13,5 @@ Tampermonkey:
 It hides the AD in the website, i.e, CSDN and Runoob.  
 
 ThreadPool:  
-The Java thread pool  
+The thread pool and the Async generic task class.    
 
