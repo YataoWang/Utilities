@@ -1,4 +1,4 @@
-package com.src;
+package com.wyt.threadpool;
 
 public interface ITaskEvent<T> {
   public void fireInitialize() throws Exception;

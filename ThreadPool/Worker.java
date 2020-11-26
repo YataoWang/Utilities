@@ -1,4 +1,4 @@
-package com.src;
+package com.wyt.threadpool;
 
 public class Worker implements IWorker, Runnable {
   private IWorkerEvent sink;

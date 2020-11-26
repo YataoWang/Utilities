@@ -1,4 +1,4 @@
-package com.src;
+package com.wyt.threadpool;
 
 public interface IWorker {
   public void start();
