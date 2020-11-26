@@ -2,12 +2,13 @@ package com.wyt.threadpool;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AsyncGenericTask<T> implements IWorkerEvent {
   private static final int DEFAULT_MAX_TASKS = 10000;
-  private boolean _running;
+  private AtomicBoolean _running = new AtomicBoolean(false);
   private ITaskEvent _sink;
   private int _maxTaskNum;
   private WorkerPolicy _policy;
@@ -38,7 +39,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
    * @throws Exception
    */
   public void initialize(TaskConfiguration conf) throws Exception {
-    if (this._running) {
+    if (this._running.get()) {
       return;
     }
     if (null == conf) {
@@ -54,7 +55,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
       this._logger.setLevel(this._level);
     }
 
-    this._running = true;
+    this._running.set(true);
     if (null != this._sink) {
       this._sink.fireInitialize();
     }
@@ -65,7 +66,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
    * Shutdown the {@link AsyncGenericTask}, close the task thread
    */
   public void shutdown() {
-    this._running = false;
+    this._running.set(false);
     WorkerPool.getInstance().releaseWorker(this._worker);
     if (null != this._sink) {
       this._sink.fireFinalize();
@@ -127,7 +128,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
       return;
     }
 
-    while (this._running) {
+    while (this._running.get()) {
       T task = null;
       synchronized (this) {
         if (!this._mainTasks.isEmpty()) {
@@ -141,7 +142,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
             this._sink.fireTask(task);
           } catch (Exception ex) {
             this._logger.log(Level.SEVERE, ex.getMessage(), ex);
-            if (this._running) {
+            if (this._running.get()) {
               continue;
             } else {
               break;
