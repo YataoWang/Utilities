@@ -6,7 +6,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AsyncGenericTask<T> implements IWorkerEvent {
-  private final Object syncObj = new Object();
   private static final int DEFAULT_MAX_TASKS = 10000;
   private boolean _running;
   private ITaskEvent _sink;
@@ -89,7 +88,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
    * @param task
    */
   public void addTask(T task) {
-    synchronized (this.syncObj) {
+    synchronized (this) {
       if (this._mainTasks.size() < this._maxTaskNum) {
         this._mainTasks.add(task);
       } else {
@@ -123,7 +122,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
 
     while (this._running) {
       T task = null;
-      synchronized (this.syncObj) {
+      synchronized (this) {
         if (!this._mainTasks.isEmpty()) {
           task = this._mainTasks.remove();
         }
@@ -144,7 +143,7 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
         }
       }
 
-      synchronized (this.syncObj) {
+      synchronized (this) {
         while (!this._pendingTasks.isEmpty() && this._mainTasks.size() < this._maxTaskNum) {
           this._mainTasks.add(this._pendingTasks.remove());
         }
