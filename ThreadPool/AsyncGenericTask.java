@@ -88,27 +88,34 @@ public class AsyncGenericTask<T> implements IWorkerEvent {
    * @param task
    */
   public void addTask(T task) {
+    int taskNum;
     synchronized (this) {
-      if (this._mainTasks.size() < this._maxTaskNum) {
+      taskNum = this._mainTasks.size();
+    }
+
+    if (taskNum < this._maxTaskNum) {
+      synchronized (this) {
         this._mainTasks.add(task);
-      } else {
-        switch (this._policy) {
-          case ABORT: {
-            log(Level.SEVERE, this._policy + "\r\nPlease increase the maximum task value.");
-            throw new RuntimeException();
-          }
-          case DISCARD: {
-            log(Level.WARNING, this._policy + "\r\nPlease increase the maximum task value.");
-            break;
-          }
-          case BLOCK: {
-            this._pendingTasks.add(task);
-            break;
-          }
-          default:
-            log(Level.SEVERE, "Invalid worker policy.");
-            throw new RuntimeException("Invalid worker policy.");
+      }
+    } else {
+      switch (this._policy) {
+        case ABORT: {
+          log(Level.SEVERE, this._policy + "\r\nPlease increase the maximum task value.");
+          throw new RuntimeException();
         }
+        case DISCARD: {
+          log(Level.WARNING, this._policy + "\r\nPlease increase the maximum task value.");
+          break;
+        }
+        case BLOCK: {
+          synchronized (this) {
+            this._pendingTasks.add(task);
+          }
+          break;
+        }
+        default:
+          log(Level.SEVERE, "Invalid worker policy.");
+          throw new RuntimeException("Invalid worker policy.");
       }
     }
   }
