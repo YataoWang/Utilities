@@ -7,17 +7,21 @@ import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class Downloader implements Runnable {
+class Downloader implements Runnable {
   private int id;
   private long from = 0;
   private long to;
   private String url;
   private File target;
   private int perDownSize;
-  private IDownloadEvent sink;
+  private IMultiDownloader sink;
   private volatile DownloadStatus status;
-
   private long hasDown = 0;
+  private int hasRetry = 0;
+
+  public int getId() {
+    return this.id;
+  }
 
   public Downloader setId(int id) {
     this.id = id;
@@ -49,7 +53,7 @@ public class Downloader implements Runnable {
     return this;
   }
 
-  public Downloader setSink(IDownloadEvent sink) {
+  public Downloader setSink(IMultiDownloader sink) {
     this.sink = sink;
     return this;
   }
@@ -59,13 +63,30 @@ public class Downloader implements Runnable {
     return this;
   }
 
+  public int getHasRetry() {
+    return this.hasRetry;
+  }
+
   public void start() {
     if (this.status != DownloadStatus.READYING) {
       return;
     }
 
     this.status = DownloadStatus.STARTING;
-    new Thread(this).start();
+    startThread();
+    fireStarting();
+  }
+
+  public void retry() {
+    if (this.status != DownloadStatus.STARTING) {
+      return;
+    }
+
+    ++this.hasRetry;
+    this.from = this.hasDown;
+    this.status = DownloadStatus.RETRY;
+    startThread();
+    fireRetrying();
   }
 
   public void pause() {
@@ -82,9 +103,11 @@ public class Downloader implements Runnable {
     process();
   }
 
-  private void process() {
-    fireStarting();
+  private void startThread() {
+    new Thread(this).start();
+  }
 
+  private void process() {
     HttpURLConnection connection = null;
     InputStream inputStream = null;
     RandomAccessFile writeFile = null;
@@ -92,7 +115,7 @@ public class Downloader implements Runnable {
       connection = getHttpConnection();
       inputStream = connection.getInputStream();
       writeFile = new RandomAccessFile(this.target, "rw");
-      writeFile.seek(this.from);
+      writeFile.seek(getSeekPos());
 
       byte[] buffer = new byte[this.perDownSize];
       int read;
@@ -101,6 +124,8 @@ public class Downloader implements Runnable {
         this.hasDown += read;
         fireTransfer(read);
       }
+
+      fireEnding();
     } catch (Exception ex) {
       fireError(Utils.getErrorMessage(ex));
     } finally {
@@ -117,8 +142,6 @@ public class Downloader implements Runnable {
       if (null != connection) {
         connection.disconnect();
       }
-
-      fireEnding();
     }
   }
 
@@ -133,9 +156,23 @@ public class Downloader implements Runnable {
     return connection;
   }
 
+  private long getSeekPos() {
+    if (this.status == DownloadStatus.RETRY) {
+      return this.hasDown;
+    } else {
+      return this.from;
+    }
+  }
+
   private void fireStarting() {
     if (null != this.sink) {
       this.sink.fireStarting(this.id);
+    }
+  }
+
+  private void fireRetrying() {
+    if (null != this.sink) {
+      this.sink.fireRetrying(this.id);
     }
   }
 

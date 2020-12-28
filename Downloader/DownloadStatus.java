@@ -1,8 +1,9 @@
 package com.wyt.downloader;
 
-public enum DownloadStatus {
+enum DownloadStatus {
   READYING,
   STARTING,
   STOPPING,
   ENDING,
+  RETRY,
 }

@@ -3,7 +3,7 @@ package com.wyt.downloader;
 import java.io.File;
 import java.io.IOException;
 
-public class Utils {
+class Utils {
   public static boolean isExist(String file) {
     return new File(file).exists();
   }

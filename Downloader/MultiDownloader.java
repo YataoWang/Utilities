@@ -4,11 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.logging.Logger;
 
-public class MultiDownloader {
+public class MultiDownloader implements IMultiDownloader {
   private int id;
   private final int threadNum;
   private IDownloadEvent sink;
+  private DownloaderMgr downloaderMgr;
+  private Logger logger;
 
   public MultiDownloader(int threadNum) {
     this(threadNum, null);
@@ -17,6 +20,8 @@ public class MultiDownloader {
   public MultiDownloader(int threadNum, IDownloadEvent sink) {
     this.threadNum = threadNum;
     this.sink = sink;
+    this.downloaderMgr = new DownloaderMgr();
+    this.logger = Logger.getLogger(this.getClass().getName());
   }
 
   public void setSink(IDownloadEvent sink) {
@@ -24,28 +29,28 @@ public class MultiDownloader {
   }
 
   public void download(String url, File target) throws Exception {
+    Utils.ensureExist(target);
+
     long totalSize = getDownloadSize(url);
     if (totalSize <= 0) {
       return;
     }
 
-    Utils.ensureExist(target);
-
-    DownloadEvent event = new DownloadEvent();
-    long size = totalSize / this.threadNum + 1;
     long from = 0;
-    for (int i = 0; i < this.threadNum; i++) {
-      new Downloader()
+    long size = totalSize / this.threadNum + 1;
+    for (int i = 0; i < this.threadNum; i++, from += size) {
+      Downloader downloader = new Downloader()
               .setId(getId())
               .setFrom(from)
               .setTo(from + size)
               .setUrl(url)
               .setTarget(target)
               .setPerDownSize(Const.PER_DOWN_SIZE)
-              .setSink(event)
-              .ready()
-              .start();
-      from += size;
+              .setSink(this)
+              .ready();
+      this.downloaderMgr.addDownloader(downloader);
+
+      downloader.start();
     }
   }
 
@@ -90,27 +95,53 @@ public class MultiDownloader {
 
     return id;
   }
-}
 
-class DownloadEvent implements IDownloadEvent {
+  private void doRetry(int id) {
+    Downloader downloader = this.downloaderMgr.getDownloader(id);
+    if (downloader.getHasRetry() < Const.MAX_RETRY_COUNTER) {
+      downloader.retry();
+    }
+  }
 
   @Override
   public void fireStarting(int id) {
-    System.out.println("fireStarting -> " + id);
+    this.logger.fine("fireStarting -> " + id);
+    if (null != this.sink) {
+      this.sink.fireStarting(id);
+    }
+  }
+
+  @Override
+  public void fireRetrying(int id) {
+    this.logger.fine("fireRetrying -> " + id);
+    if (null != this.sink) {
+      this.sink.fireRetrying(id);
+    }
   }
 
   @Override
   public void fireTransfer(int id, int size) {
-    System.out.println("fireTransfer -> " + id + " , transfer -> " + size);
+    this.logger.fine("fireTransfer -> " + id + " , transfer -> " + size);
+    if (null != this.sink) {
+      this.sink.fireTransfer(id, size);
+    }
   }
 
   @Override
   public void fireEnding(int id) {
-    System.out.println("fireEnding -> " + id);
+    this.logger.fine("fireEnding -> " + id);
+    if (null != this.sink) {
+      this.sink.fireEnding(id);
+    }
   }
 
   @Override
   public void fireError(int id, String message) {
-    System.out.println("fireEnding -> " + id + " , error -> " + message);
+    this.logger.fine("fireError -> " + id + " , error -> " + message);
+    if (null != this.sink) {
+      this.sink.fireError(id, message);
+    }
+
+    doRetry(id);
   }
 }
