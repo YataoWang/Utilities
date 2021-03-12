@@ -12,7 +12,7 @@ public class DownloaderTest {
       public void run() {
         try {
           MultiDownloader downloader = new MultiDownloader(20);
-          downloader.download("https://downloads.apache.org/tomcat/tomcat-9/v9.0.41/bin/apache-tomcat-9.0.41.tar.gz", new File("C:\\Users\\TerranW\\Desktop\\apache-tomcat-9.0.41.tar.gz"));
+          downloader.download("https://downloads.apache.org/tomcat/tomcat-9/v9.0.44/bin/apache-tomcat-9.0.44.tar.gz", new File("C:\\Users\\TerranW\\Desktop\\apache-tomcat-9.0.44.tar.gz"));
         } catch (Exception ex) {
           ex.printStackTrace();
         }

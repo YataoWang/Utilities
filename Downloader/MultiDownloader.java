@@ -105,7 +105,7 @@ public class MultiDownloader implements IMultiDownloader {
 
   @Override
   public void fireStarting(int id) {
-    this.logger.fine("fireStarting -> " + id);
+    this.logger.info("fireStarting -> " + id);
     if (null != this.sink) {
       this.sink.fireStarting(id);
     }
@@ -113,7 +113,7 @@ public class MultiDownloader implements IMultiDownloader {
 
   @Override
   public void fireRetrying(int id) {
-    this.logger.fine("fireRetrying -> " + id);
+    this.logger.warning("fireRetrying -> " + id);
     if (null != this.sink) {
       this.sink.fireRetrying(id);
     }
@@ -129,7 +129,7 @@ public class MultiDownloader implements IMultiDownloader {
 
   @Override
   public void fireEnding(int id) {
-    this.logger.fine("fireEnding -> " + id);
+    this.logger.info("fireEnding -> " + id);
     if (null != this.sink) {
       this.sink.fireEnding(id);
     }
@@ -137,7 +137,7 @@ public class MultiDownloader implements IMultiDownloader {
 
   @Override
   public void fireError(int id, String message) {
-    this.logger.fine("fireError -> " + id + " , error -> " + message);
+    this.logger.severe("fireError -> " + id + " , error -> " + message);
     if (null != this.sink) {
       this.sink.fireError(id, message);
     }

@@ -10,6 +10,10 @@ class DownloaderMgr {
     this.downloaderList = new ArrayList<Downloader>();
   }
 
+  public int getDownloaderSize() {
+    return this.downloaderList.size();
+  }
+
   public void addDownloader(Downloader downloader) {
     this.downloaderList.add(downloader);
   }
