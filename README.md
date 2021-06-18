@@ -18,4 +18,10 @@ The thread pool and the Async generic task class.
 Downloader:  
 A multiple threads downloader.  
 
+Common:  
+A common classes.  
+
+Crypt:  
+Some algorithms, SHA1, SHA1SHA1, SHA256, BASE64, AES  
+
 
