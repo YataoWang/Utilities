@@ -1,4 +1,4 @@
-package com.wyt.downloader;
+package utilities.downloader;
 
 class Const {
   public static final String HTTP_GET = "GET";

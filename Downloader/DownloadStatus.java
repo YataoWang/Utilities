@@ -1,6 +1,6 @@
-package com.wyt.downloader;
+package utilities.downloader;
 
-enum DownloadStatus {
+public enum DownloadStatus {
   READYING,
   STARTING,
   STOPPING,

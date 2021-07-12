@@ -1,4 +1,4 @@
-package com.wyt.threadpool;
+package utilities.threadpool;
 
 public class IncrementNum {
   private int number = 0;

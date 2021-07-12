@@ -1,4 +1,4 @@
-package com.wyt.downloader;
+package utilities.downloader;
 
 import java.util.ArrayList;
 import java.util.List;

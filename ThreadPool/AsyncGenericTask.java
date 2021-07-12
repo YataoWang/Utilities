@@ -1,4 +1,4 @@
-package com.wyt.threadpool;
+package utilities.threadpool;
 
 import java.util.ArrayDeque;
 import java.util.Queue;

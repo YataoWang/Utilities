@@ -1,4 +1,4 @@
-package com.wyt.downloader;
+package utilities.downloader;
 
 public interface IDownloadEvent {
   public void fireStarting(int threadId);

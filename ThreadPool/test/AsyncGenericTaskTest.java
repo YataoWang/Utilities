@@ -1,8 +1,8 @@
-package com.wyt.threadpool.test;
+package utilities.threadpool.test;
 
-import com.wyt.threadpool.AsyncGenericTask;
-import com.wyt.threadpool.ITaskEvent;
-import com.wyt.threadpool.WorkerPolicy;
+import utilities.threadpool.AsyncGenericTask;
+import utilities.threadpool.ITaskEvent;
+import utilities.threadpool.WorkerPolicy;
 
 public class AsyncGenericTaskTest {
   public static void main(String[] args){

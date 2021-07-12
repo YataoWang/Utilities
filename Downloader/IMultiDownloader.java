@@ -1,6 +1,6 @@
-package com.wyt.downloader;
+package utilities.downloader;
 
-interface IMultiDownloader {
+public interface IMultiDownloader {
   public void fireStarting(int id);
   public void fireRetrying(int id);
   public void fireTransfer(int id, int size);

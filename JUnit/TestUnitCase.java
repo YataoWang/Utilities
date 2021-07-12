@@ -1,3 +1,5 @@
+package utilities.junit;
+
 import utilities.common.Utilities;
 
 public class TestUnitCase {

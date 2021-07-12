@@ -1,7 +1,7 @@
-package com.wyt.downloader.test;
+package utilities.downloader.test;
 
-import com.wyt.downloader.IDownloadEvent;
-import com.wyt.downloader.MultiDownloader;
+import utilities.downloader.IDownloadEvent;
+import utilities.downloader.MultiDownloader;
 
 import java.io.File;
 

@@ -1,4 +1,4 @@
-package com.wyt.threadpool;
+package utilities.threadpool;
 
 public enum WorkerPolicy {
   ABORT {
