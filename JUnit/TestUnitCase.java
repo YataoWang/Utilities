@@ -1,3 +1,5 @@
+import utilities.common.Utilities;
+
 public class TestUnitCase {
   public final String Id;
   public final String Name;
@@ -59,7 +61,7 @@ public class TestUnitCase {
     StringBuffer sb = new StringBuffer();
     sb.append(this.Message);
     if (this.InnerEx != null) {
-      sb.append(Utilities.getCallStack(this.InnerEx));
+      sb.append(Utilities.getFullStack(this.InnerEx));
     }
 
     return sb.toString();

@@ -3,6 +3,7 @@ import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
+import utilities.common.Utilities;
 
 import java.util.ArrayList;
 import java.util.List;

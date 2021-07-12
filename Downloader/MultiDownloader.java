@@ -1,5 +1,7 @@
 package com.wyt.downloader;
 
+import utilities.common.Utilities;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -27,7 +29,7 @@ public class MultiDownloader implements IMultiDownloader {
   }
 
   public void download(String url, File target) throws Exception {
-    Utils.ensureExist(target);
+    Utilities.ensureExist(target);
 
     long totalSize = getDownloadSize(url);
     if (totalSize <= 0) {

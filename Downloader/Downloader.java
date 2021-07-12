@@ -1,5 +1,7 @@
 package com.wyt.downloader;
 
+import utilities.common.Utilities;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -127,7 +129,7 @@ class Downloader implements Runnable {
 
       fireEnding();
     } catch (Exception ex) {
-      fireError(Utils.getErrorMessage(ex));
+      fireError(Utilities.getErrorMessage(ex));
     } finally {
       if (null != writeFile) {
         try {
